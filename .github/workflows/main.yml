@@ -1,4 +1,4 @@
-name: Setup RDP
+name: Setup SSH and RDP
 
 on: [push, workflow_dispatch]
 
@@ -10,13 +10,25 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
+    - name: Install SSH Server
+      run: |
+        # Install the OpenSSH server feature
+        Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+        
+        # Start the SSH server service
+        Start-Service sshd
+        
+        # Set SSH server service to start automatically
+        Set-Service -Name sshd -StartupType 'Automatic'
+        
+        # Configure the firewall for SSH
+        Enable-NetFirewallRule -Name sshd
+
     - name: Enable Remote Desktop
       run: |
         $ErrorActionPreference = "Stop"
-        
         # Enable Remote Desktop
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'fDenyTSConnections' -Value 0
-        
         # Enable Network Level Authentication
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name 'UserAuthentication' -Value 1
 
